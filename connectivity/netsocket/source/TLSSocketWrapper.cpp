@@ -169,6 +169,15 @@ nsapi_error_t TLSSocketWrapper::start_handshake(bool first_call)
     }
 
     if (_tls_initialized) {
+
+        // Reset the session to be able to reconnect
+        // TODO can we distinguish between first and subsequent connections?
+        ret = mbedtls_ssl_session_reset(&_ssl);
+        if (ret)
+        {
+            return ret;
+        }
+
         return continue_handshake();
     }
 
@@ -642,7 +651,7 @@ nsapi_error_t TLSSocketWrapper::connect(const SocketAddress &address)
         return NSAPI_ERROR_NO_SOCKET;
     }
 
-    if (!is_handshake_started() && _connect_transport) {
+    if (_connect_transport) {
         ret = _transport->connect(address);
         if (ret && ret != NSAPI_ERROR_IS_CONNECTED) {
             return ret;
@@ -667,7 +676,7 @@ void TLSSocketWrapper::set_blocking(bool blocking)
 void TLSSocketWrapper::set_timeout(int timeout)
 {
     _timeout = timeout;
-    if (!is_handshake_started() && timeout != -1 && _connect_transport) {
+    if (_transport && timeout != -1 && _connect_transport) {
         // If we have not yet connected the transport, we need to modify its blocking mode as well.
         // After connection is initiated, it is already set to non blocking mode
         _transport->set_timeout(timeout);
@@ -720,18 +729,17 @@ void TLSSocketWrapper::event()
     }
 }
 
-bool TLSSocketWrapper::is_handshake_started() const
-{
-    return _tls_initialized;
-}
-
-
 nsapi_error_t TLSSocketWrapper::getpeername(SocketAddress *address)
 {
     if (!_handshake_completed) {
         return NSAPI_ERROR_NO_CONNECTION;
     }
     return _transport->getpeername(address);
+}
+
+void TLSSocketWrapper::set_transport(Socket *transport)
+{
+    _transport = transport;
 }
 
 #endif /* MBEDTLS_SSL_CLI_C */

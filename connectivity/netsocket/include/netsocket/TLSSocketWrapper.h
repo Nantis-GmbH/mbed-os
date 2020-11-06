@@ -263,7 +263,7 @@ protected:
      */
     nsapi_error_t start_handshake(bool first_call);
 
-    bool is_handshake_started() const;
+    void set_transport(Socket *transport);
 
     void event();
 #endif

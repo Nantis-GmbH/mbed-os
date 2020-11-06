@@ -69,6 +69,7 @@ public:
      */
     nsapi_error_t open(NetworkStack *stack)
     {
+        this->set_transport(&tcp_socket);
         return tcp_socket.open(stack);
     }
 
