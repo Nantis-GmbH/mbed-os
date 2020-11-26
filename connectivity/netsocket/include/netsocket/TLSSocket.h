@@ -76,6 +76,7 @@ public:
     template <typename S>
     nsapi_error_t open(S *stack)
     {
+        this->set_transport(&tcp_socket);
         return open(nsapi_create_stack(stack));
     }
 
