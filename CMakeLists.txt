@@ -6,6 +6,7 @@
 cmake_minimum_required(VERSION 3.19.0 FATAL_ERROR)
 
 include(${MBED_CONFIG_PATH}/mbed_config.cmake)
+include(tools/cmake/set_linker_script.cmake)
 
 add_library(mbed-core INTERFACE)
 
@@ -23,7 +24,6 @@ target_link_libraries(mbed-baremetal
     INTERFACE
         mbed-core
 )
-
 # Validate selected C library type
 # The C library type selected has to match the library that the target can support
 if(${MBED_C_LIB} STREQUAL "small")
@@ -35,7 +35,7 @@ if(${MBED_C_LIB} STREQUAL "small")
                 " we are using the standard C library instead."
             )
             set(MBED_C_LIB "std" CACHE STRING "")
-        endif() 
+        endif()
     endif()
 elseif(NOT ${MBED_C_LIB} IN_LIST MBED_TARGET_SUPPORTED_C_LIBS)
     message(FATAL_ERROR
@@ -57,6 +57,13 @@ if(${MBED_TOOLCHAIN_FILE_USED})
     mbed_set_profile_options(mbed-core ${MBED_TOOLCHAIN})
     mbed_set_c_lib(mbed-core ${MBED_C_LIB})
     mbed_set_printf_lib(mbed-core ${MBED_PRINTF_LIB})
+
+    target_compile_features(mbed-core
+        INTERFACE
+            c_std_11
+            cxx_std_14
+    )
+
 endif()
 
 target_compile_definitions(mbed-core
@@ -65,9 +72,23 @@ target_compile_definitions(mbed-core
         ${MBED_CONFIG_DEFINITIONS}
 )
 
+# We need to generate a "response file" to pass to the C preprocessor when we preprocess the linker
+# script, because of path length limitations on Windows. We set the response file and bind the path
+# to a global property here. The MBED_TARGET being built queries this global property when it sets
+# the linker script.
+#
+# We must set this global property before the targets subdirectory is added to the project. This is
+# required because the MBED_TARGET depends on the response file. If the path to the response file
+# is not defined when the target requests it the config definitions will not be passed to CPP.
+#
+# TODO: Remove this and find a more idiomatic way of passing compile definitions to CPP without
+# using response files or global properties.
+mbed_generate_options_for_linker(mbed-core RESPONSE_FILE_PATH)
+set_property(GLOBAL PROPERTY COMPILE_DEFS_RESPONSE_FILE ${RESPONSE_FILE_PATH})
+
 # Add compile definitions for backward compatibility with the toolchain
 # supported. New source files should instead check for __GNUC__ and __clang__
-# for the GCC_ARM and ARM toolchains respectively. 
+# for the GCC_ARM and ARM toolchains respectively.
 if(${MBED_TOOLCHAIN} STREQUAL "GCC_ARM")
     target_compile_definitions(mbed-core
         INTERFACE
@@ -111,55 +132,27 @@ add_subdirectory(features EXCLUDE_FROM_ALL)
 add_subdirectory(cmsis/CMSIS_5/CMSIS/RTOS2 EXCLUDE_FROM_ALL)
 add_subdirectory(cmsis/device/rtos EXCLUDE_FROM_ALL)
 
+# Ensure the words that make up the Mbed target name are separated with a hyphen, lowercase, and with the `mbed-` prefix.
+string(TOLOWER ${MBED_TARGET} MBED_TARGET_CONVERTED)
+string(REPLACE "_" "-" MBED_TARGET_CONVERTED ${MBED_TARGET_CONVERTED})
+string(PREPEND MBED_TARGET_CONVERTED "mbed-")
+
+target_link_libraries(mbed-core INTERFACE ${MBED_TARGET_CONVERTED})
+
 #
 # Configures the application
+# Note, this function will be removed in the next revisions
 #
 function(mbed_configure_app_target target)
-    # Set the language standard to use per target
-    target_compile_features(${target}
-        PUBLIC
-            c_std_11
-            cxx_std_14
-    )
-endfunction()
-
-#
-# Specifies linker script used for linking `target`.
-#
-function(mbed_set_mbed_target_linker_script target)
-    get_property(mbed_target_linker_script GLOBAL PROPERTY MBED_TARGET_LINKER_FILE)
-    mbed_generate_options_for_linker(${target} _linker_preprocess_definitions)
+    # Gcc Arm requires memap to be set with app name, equally to ARMClang
+    # TODO: move this to toolchain and set properly
     if(MBED_TOOLCHAIN STREQUAL "GCC_ARM")
-        set(CMAKE_PRE_BUILD_COMMAND
-            COMMAND "arm-none-eabi-cpp" ${_linker_preprocess_definitions} -x assembler-with-cpp -E -Wp,-P
-                ${mbed_target_linker_script} -o ${CMAKE_BINARY_DIR}/${target}.link_script.ld
-
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            BYPRODUCTS "${CMAKE_BINARY_DIR}/${target}.link_script.ld"
-        )
+        message(${target})
         target_link_options(mbed-core
             INTERFACE
-                "-T" "${CMAKE_BINARY_DIR}/${target}.link_script.ld"
-                "-Wl,-Map=${CMAKE_BINARY_DIR}/${target}.map"
-        )
-    elseif(MBED_TOOLCHAIN STREQUAL "ARM")
-        set(CMAKE_PRE_BUILD_COMMAND COMMAND "")
-        target_link_options(mbed-core
-            INTERFACE
-                "--scatter=${mbed_target_linker_script}"
-                "--predefine=${_linker_preprocess_definitions}"
-                "--map"
+                "-Wl,-Map=${CMAKE_CURRENT_BINARY_DIR}/${target}${CMAKE_EXECUTABLE_SUFFIX}.map"
         )
     endif()
-    add_custom_command(
-        TARGET
-            ${target}
-        PRE_LINK
-            ${CMAKE_PRE_BUILD_COMMAND}
-        COMMENT
-            "Link line:"
-        VERBATIM
-    )
 endfunction()
 
 #
@@ -169,18 +162,18 @@ function(mbed_generate_bin_hex target)
     get_property(elf_to_bin GLOBAL PROPERTY ELF2BIN)
     if(MBED_TOOLCHAIN STREQUAL "GCC_ARM")
         set(CMAKE_POST_BUILD_COMMAND
-            COMMAND ${elf_to_bin} -O binary $<TARGET_FILE:${target}> ${CMAKE_BINARY_DIR}/${target}.bin
-            COMMAND ${CMAKE_COMMAND} -E echo "-- built: ${CMAKE_BINARY_DIR}/${target}.bin"
-            COMMAND ${elf_to_bin} -O ihex $<TARGET_FILE:${target}> ${CMAKE_BINARY_DIR}/${target}.hex
-            COMMAND ${CMAKE_COMMAND} -E echo "-- built: ${CMAKE_BINARY_DIR}/${target}.hex"
+            COMMAND ${elf_to_bin} -O binary $<TARGET_FILE:${target}> ${CMAKE_CURRENT_BINARY_DIR}/${target}.bin
+            COMMAND ${CMAKE_COMMAND} -E echo "-- built: ${CMAKE_CURRENT_BINARY_DIR}/${target}.bin"
+            COMMAND ${elf_to_bin} -O ihex $<TARGET_FILE:${target}> ${CMAKE_CURRENT_BINARY_DIR}/${target}.hex
+            COMMAND ${CMAKE_COMMAND} -E echo "-- built: ${CMAKE_CURRENT_BINARY_DIR}/${target}.hex"
         )
     elseif(MBED_TOOLCHAIN STREQUAL "ARM")
         get_property(mbed_studio_arm_compiler GLOBAL PROPERTY MBED_STUDIO_ARM_COMPILER)
         set(CMAKE_POST_BUILD_COMMAND
-            COMMAND ${elf_to_bin} ${mbed_studio_arm_compiler} --bin  -o ${CMAKE_BINARY_DIR}/${target}.bin $<TARGET_FILE:${target}>
-            COMMAND ${CMAKE_COMMAND} -E echo "-- built: ${CMAKE_BINARY_DIR}/${target}.bin"
-            COMMAND ${elf_to_bin} ${mbed_studio_arm_compiler} --i32combined  -o ${CMAKE_BINARY_DIR}/${target}.hex $<TARGET_FILE:${target}>
-            COMMAND ${CMAKE_COMMAND} -E echo "-- built: ${CMAKE_BINARY_DIR}/${target}.hex"
+            COMMAND ${elf_to_bin} ${mbed_studio_arm_compiler} --bin  -o ${CMAKE_CURRENT_BINARY_DIR}/${target}.bin $<TARGET_FILE:${target}>
+            COMMAND ${CMAKE_COMMAND} -E echo "-- built: ${CMAKE_CURRENT_BINARY_DIR}/${target}.bin"
+            COMMAND ${elf_to_bin} ${mbed_studio_arm_compiler} --i32combined  -o ${CMAKE_CURRENT_BINARY_DIR}/${target}.hex $<TARGET_FILE:${target}>
+            COMMAND ${CMAKE_COMMAND} -E echo "-- built: ${CMAKE_CURRENT_BINARY_DIR}/${target}.hex"
         )
     endif()
     add_custom_command(
@@ -192,20 +185,27 @@ function(mbed_generate_bin_hex target)
             "executable:"
         VERBATIM
     )
+
+    if(TARGET mbed-post-build-bin-${MBED_TARGET})
+        add_custom_target(mbed-post-build
+            ALL
+            DEPENDS
+                mbed-post-build-bin-${MBED_TARGET}
+        )
+    endif()
 endfunction()
 
 #
 # Parse toolchain generated map file of `target` and display a readable table format.
 #
 function(mbed_generate_map_file target)
-     find_package (Python3)
      add_custom_command(
          TARGET
              ${target}
          POST_BUILD
-         COMMAND ${Python3_EXECUTABLE} ${MBED_PATH}/tools/memap.py -t ${MBED_TOOLCHAIN} ${CMAKE_BINARY_DIR}/${target}${CMAKE_EXECUTABLE_SUFFIX}.map
+         COMMAND ${Python3_EXECUTABLE} ${MBED_PATH}/tools/memap.py -t ${MBED_TOOLCHAIN} ${CMAKE_CURRENT_BINARY_DIR}/${target}${CMAKE_EXECUTABLE_SUFFIX}.map
          WORKING_DIRECTORY
-             ${CMAKE_BINARY_DIR}
+             ${CMAKE_CURRENT_BINARY_DIR}
          COMMENT
              "Displaying memory map for ${target}"
 )
@@ -234,7 +234,10 @@ endfunction()
 function(mbed_set_post_build target)
     mbed_validate_application_profile(${target})
     mbed_generate_bin_hex(${target})
-    mbed_generate_map_file(${target})
+
+    if(HAVE_MEMAP_DEPS)
+        mbed_generate_map_file(${target})
+    endif()
 endfunction()
 
 # Ninja requires to be forced for response files
