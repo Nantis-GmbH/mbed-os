@@ -366,11 +366,7 @@ namespace mbed {
 struct stat {
     dev_t     st_dev;     ///< Device ID containing file
     ino_t     st_ino;     ///< File serial number
-    mode_t    st_mode;    ///< Mode of file
-    nlink_t   st_nlink;   ///< Number of links to file
-
-    uid_t     st_uid;     ///< User ID
-    gid_t     st_gid;     ///< Group ID
+    mode_t st_mode;       ///< Mode of file
 
     off_t     st_size;    ///< Size of file in bytes
 
