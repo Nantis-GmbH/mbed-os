@@ -428,7 +428,6 @@ nsapi_error_t AT_CellularNetwork::get_signal_quality(int &rssi, int *ber)
     int t_rssi = _at.read_int();
     int t_ber = _at.read_int();
     _at.resp_stop();
-    printf("RSSI code: %d\n", t_rssi);
     if (t_rssi < 0 || t_ber < 0) {
         _at.unlock();
         return NSAPI_ERROR_DEVICE_ERROR;

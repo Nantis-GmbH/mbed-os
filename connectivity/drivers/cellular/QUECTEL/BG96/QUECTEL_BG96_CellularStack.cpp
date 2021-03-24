@@ -20,7 +20,6 @@
 #include "QUECTEL/BG96/QUECTEL_BG96_CellularStack.h"
 #include "CellularLog.h"
 #include "netsocket/TLSSocket.h"
-#include "ThisThread.h"
 
 // Ref: Quectel_BG96_SSL_AT_Commands_Manual, ch 2.1.1 AT+QSSLCFG
 static const int BG96_SUPPORTED_SSL_VERSION     = 4; // All
@@ -410,8 +409,6 @@ nsapi_size_or_error_t QUECTEL_BG96_CellularStack::socket_sendto_impl(CellularSoc
 
     // Get the sent count after sending
     nsapi_size_or_error_t err = NSAPI_ERROR_OK;
-
-    rtos::ThisThread::sleep_for(100ms);
 
     if (!socket->tls_socket) {
         err = _at.at_cmd_int("+QISEND", "=", sent_len_after, "%d%d", socket->id, 0);
