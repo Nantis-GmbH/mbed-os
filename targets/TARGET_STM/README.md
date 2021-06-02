@@ -66,14 +66,14 @@ This table summarizes the STM32Cube versions currently used in Mbed OS master br
 | F2          |    1.6.0     | https://github.com/STMicroelectronics/STM32CubeF2 |
 | F3          |    1.11.2    | https://github.com/STMicroelectronics/STM32CubeF3 |
 | F4          |    1.26.1    | https://github.com/STMicroelectronics/STM32CubeF4 |
-| F7          |    1.16.0    | https://github.com/STMicroelectronics/STM32CubeF7 |
+| F7          |    1.16.1    | https://github.com/STMicroelectronics/STM32CubeF7 |
 | G0          |    1.4.1     | https://github.com/STMicroelectronics/STM32CubeG0 |
-| G4          |    1.1.0     | https://github.com/STMicroelectronics/STM32CubeG4 |
+| G4          |    1.4.0     | https://github.com/STMicroelectronics/STM32CubeG4 |
 | H7          |    1.8.0     | https://github.com/STMicroelectronics/STM32CubeH7 |
 | L0          |    1.12.0    | https://github.com/STMicroelectronics/STM32CubeL0 |
 | L1          |    1.10.2    | https://github.com/STMicroelectronics/STM32CubeL1 |
 | L4          |    1.17.0    | https://github.com/STMicroelectronics/STM32CubeL4 |
-| L5          |    1.3.0     | https://github.com/STMicroelectronics/STM32CubeL5 |
+| L5          |    1.4.0     | https://github.com/STMicroelectronics/STM32CubeL5 |
 | WB          |    1.11.1    | https://github.com/STMicroelectronics/STM32CubeWB |
 | WL          |    1.0.0     | https://github.com/STMicroelectronics/STM32CubeWL |
 
@@ -405,6 +405,17 @@ https://github.com/ARMmbed/mbed-os/blob/master/connectivity/drivers/emac/TARGET_
 Option is also to define your own `HAL_ETH_MspInit` function,
 you then have to add **USE_USER_DEFINED_HAL_ETH_MSPINIT** macro.
 
+
+### Asynchronous SPI limitation
+
+The current Asynchronous SPI implementation will not be able to support high speeds (MHz Range).
+The maximum speed supported depends on
+- core operating frequency
+- depth of SPI FIFOs (if available).
+
+For application that require optimized maximum performance, the recommendation is to implement the DMA-based SPI transfer.
+The SPI DMA transfer support shall be implemented on a case-by-case based on below example
+https://github.com/ABOSTM/mbed-os/tree/I2C_SPI_DMA_IMPLEMENTATION_FOR_STM32L4
 
 
 ## Mbed OS Wiki pages
