@@ -174,7 +174,7 @@ nsapi_error_t QUECTEL_BG96_CellularStack::get_ip_address(SocketAddress *address)
         _at.skip_param(); // ID
         _at.skip_param(); // State
 
-        auto context_type = _at.read_int();
+        context_type = _at.read_int();
         if (context_type == 1) {
             _stack_type = IPV4_STACK;
         } else if (context_type == 2) {
