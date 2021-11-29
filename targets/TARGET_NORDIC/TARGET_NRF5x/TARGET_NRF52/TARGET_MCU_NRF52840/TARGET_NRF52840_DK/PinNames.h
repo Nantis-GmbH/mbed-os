@@ -57,7 +57,7 @@ typedef enum {
 #define PinDef(port_num, pin_num) P##port_num##_##pin_num = NRF_GPIO_PIN_MAP(port_num, pin_num)
 
 
-typedef enum {    
+typedef enum {
     PinDef(0 , 0), // P0_0 = 0...
     PinDef(0 , 1),
     PinDef(0 , 2),
@@ -159,16 +159,6 @@ typedef enum {
     p45 = P1_13,
     p46 = P1_14,
     p47 = P1_15,
-    
-    LED1    = p13,
-    LED2    = p14,
-    LED3    = p15,
-    LED4    = p16,
-
-    BUTTON1 = p11,
-    BUTTON2 = p12,
-    BUTTON3 = p24,
-    BUTTON4 = p25,
 
     RX_PIN_NUMBER  = p8,
     TX_PIN_NUMBER  = p6,
@@ -191,49 +181,31 @@ typedef enum {
     STDIO_UART_CTS = CTS_PIN_NUMBER,
     STDIO_UART_RTS = RTS_PIN_NUMBER,
 
-    SPI_PSELMOSI0 = P1_13,
-    SPI_PSELMISO0 = P1_14,
-    SPI_PSELSS0   = P1_12,
-    SPI_PSELSCK0  = P1_15,
+    // Arduino Uno pins
+    ARDUINO_UNO_D0 = P1_1,
+    ARDUINO_UNO_D1 = P1_2,
+    ARDUINO_UNO_D2 = P1_3,
+    ARDUINO_UNO_D3 = P1_4,
+    ARDUINO_UNO_D4 = P1_5,
+    ARDUINO_UNO_D5 = P1_6,
+    ARDUINO_UNO_D6 = P1_7,
+    ARDUINO_UNO_D7 = P1_8,
 
-    SPI_PSELMOSI1 = P1_2,
-    SPI_PSELMISO1 = P1_3,
-    SPI_PSELSS1   = P1_1,
-    SPI_PSELSCK1  = P1_4,
+    ARDUINO_UNO_D8  = P1_10,
+    ARDUINO_UNO_D9  = P1_11,
+    ARDUINO_UNO_D10 = P1_12,
+    ARDUINO_UNO_D11 = P1_13,
+    ARDUINO_UNO_D12 = P1_14,
+    ARDUINO_UNO_D13 = P1_15,
+    ARDUINO_UNO_D14 = p26,
+    ARDUINO_UNO_D15 = p27,
 
-    SPIS_PSELMOSI = P1_2,
-    SPIS_PSELMISO = P1_3,
-    SPIS_PSELSS   = P1_1,
-    SPIS_PSELSCK  = P1_4,
-
-    I2C_SDA0 = p26,
-    I2C_SCL0 = p27,
-
-    D0 = P1_1,
-    D1 = P1_2,
-    D2 = P1_3,
-    D3 = P1_4,
-    D4 = P1_5,
-    D5 = P1_6,
-    D6 = P1_7,
-    D7 = P1_8,
-
-    D8  = P1_10,
-    D9  = P1_11,
-    D10 = P1_12,
-    D11 = P1_13,
-    D12 = P1_14,
-    D13 = P1_15,
-
-    D14 = p26,
-    D15 = p27,
-
-    A0 = p3,
-    A1 = p4,
-    A2 = p28,
-    A3 = p29,
-    A4 = p30,
-    A5 = p31,
+    ARDUINO_UNO_A0 = p3,
+    ARDUINO_UNO_A1 = p4,
+    ARDUINO_UNO_A2 = p28,
+    ARDUINO_UNO_A3 = p29,
+    ARDUINO_UNO_A4 = p30,
+    ARDUINO_UNO_A5 = p31,
 
     /**** QSPI pins ****/
     QSPI1_IO0 = P0_20,
@@ -261,6 +233,34 @@ typedef enum {
     PullUp = 3,
     PullDefault = PullUp
 } PinMode;
+
+#define LED1 p13
+#define LED2 p14
+#define LED3 p15
+#define LED4 p16
+
+#define BUTTON1 p11
+#define BUTTON2 p12
+#define BUTTON3 p24
+#define BUTTON4 p25
+
+#define SPI_PSELMOSI0 P1_13
+#define SPI_PSELMISO0 P1_14
+#define SPI_PSELSS0 P1_12
+#define SPI_PSELSCK0 P1_15
+
+#define SPI_PSELMOSI1 P1_2
+#define SPI_PSELMISO1 P1_3
+#define SPI_PSELSS1 P1_1
+#define SPI_PSELSCK1 P1_4
+
+#define SPIS_PSELMOSI P1_2
+#define SPIS_PSELMISO P1_3
+#define SPIS_PSELSS P1_1
+#define SPIS_PSELSCK P1_4
+
+#define I2C_SDA0 p26
+#define I2C_SCL0 p27
 
 #ifdef __cplusplus
 }
