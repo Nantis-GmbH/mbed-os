@@ -829,7 +829,6 @@ ble_error_t GattServer::write(
     // successful
     size_t updates_sent = 0;
 
-#if BLE_FEATURE_SECURITY
     for (dmConnId_t conn_id = DM_CONN_MAX; conn_id > DM_CONN_ID_NONE; --conn_id) {
         if (DmConnInUse(conn_id) == true) {
             if (is_update_authorized(conn_id, att_handle)) {
@@ -845,7 +844,6 @@ ble_error_t GattServer::write(
             }
         }
     }
-#endif // BLE_FEATURE_SECURITY
 
     return BLE_ERROR_NONE;
 }
