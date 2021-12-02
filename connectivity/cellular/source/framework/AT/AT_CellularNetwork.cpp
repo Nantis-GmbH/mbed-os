@@ -469,7 +469,7 @@ nsapi_error_t AT_CellularNetwork::get_operator_params(int &format, operator_t &o
     _at.read_int(); //ignore mode
     format = _at.read_int();
 
-    if (_at.get_last_error() == NSAPI_ERROR_OK) {
+    if (_at.get_last_error() == NSAPI_ERROR_OK && format != -1) {
         switch (format) {
             case 0:
                 _at.read_string(operator_params.op_long, sizeof(operator_params.op_long));
