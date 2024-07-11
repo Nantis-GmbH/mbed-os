@@ -77,7 +77,7 @@ typedef struct {
     uint32_t crc;
 } reserved_trailer_t;
 
-static const size_t min_work_buf_size = 64;
+static const size_t min_work_buf_size = 1024;
 static const uint32_t initial_crc = 0xFFFFFFFF;
 static const uint32_t initial_max_keys = 16;
 
@@ -1459,6 +1459,11 @@ int TDBStore::reserved_data_get(void *reserved_data, size_t reserved_data_buf_si
     int ret = do_reserved_data_get(reserved_data, reserved_data_buf_size, actual_data_size);
     _mutex.unlock();
     return ret;
+}
+
+size_t TDBStore::get_num_keys()
+{
+    return _num_keys;
 }
 
 void TDBStore::offset_in_erase_unit(uint8_t area, uint32_t offset,

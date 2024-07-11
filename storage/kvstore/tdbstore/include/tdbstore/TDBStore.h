@@ -277,6 +277,8 @@ public:
     virtual int reserved_data_get(void *reserved_data, size_t reserved_data_buf_size,
                                   size_t *actual_data_size = 0);
 
+    size_t get_num_keys();
+
 #if !defined(DOXYGEN_ONLY)
 private:
 
