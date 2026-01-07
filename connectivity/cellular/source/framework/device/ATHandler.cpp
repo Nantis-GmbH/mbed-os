@@ -1017,6 +1017,7 @@ bool ATHandler::info_elem(char start_tag)
     }
 
     consume_char(_delimiter);
+    consume_char(' '); // EG912N-EN adds space after comma in scan response (COPS=?)
 
     if (consume_char(start_tag)) {
         _prefix_matched = true;
